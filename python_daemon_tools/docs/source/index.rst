@@ -1,9 +1,6 @@
-.. pyfse documentation master file, created by sphinx-quickstart on Fri Mar 20 10:01:02 2009.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to pyfse's documentation!
-=================================
+Welcome to Python-Daemon-Tools documentation!
+=============================================
 
 Contents:
 
@@ -24,5 +21,5 @@ Modules
 	:maxdepth: 2
 	
 	
-	modules/controller
+	modules/tools
 	

@@ -5,5 +5,4 @@
 __author__  = "Jean-Lou Dupont"
 __version__ = "$Id$"
 
-__all__ = ['',]
-
+from python_daemon_tools import *

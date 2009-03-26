@@ -27,7 +27,7 @@ def _findTrunk( path=os.path.dirname( os.path.abspath( __file__ ) ) ):
 
 
 trunk = _findTrunk()
-sys.path.append( trunk+'/python-daemon-tools' )
+sys.path.append( trunk+'/python_daemon_tools' )
 
 # General configuration
 # ---------------------
