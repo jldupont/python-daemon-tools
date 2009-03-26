@@ -7,3 +7,4 @@ __version__ = "$Id$"
 
 __all__ = ['',]
 
+import python_daemon as daemon
