@@ -8,5 +8,3 @@ Classes
 =======
 
 .. autoclass:: python_daemon_tools.tools.
-
-.. autoclass:: python_daemon_tools.tools.
