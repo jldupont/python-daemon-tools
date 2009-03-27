@@ -16,4 +16,4 @@ __version__ = "0.0.1"
 __doc_url   = "http://python-daemon-tools.googlecode.com/svn/trunk/python_daemon_tools/docs/html/index.html"
 __fileid = "$Id$"
 
-from python_daemon_tools import *
+from runner import *
