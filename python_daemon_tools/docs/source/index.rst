@@ -21,4 +21,4 @@ Modules
 	:maxdepth: 2
 	
 	modules/runner
-	
+	modules/helper
