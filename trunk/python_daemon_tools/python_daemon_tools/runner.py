@@ -70,7 +70,16 @@ class DaemonRunner(object):
     is easier to handle.
     
     """
-    def __init__(self, app, logger = None):
+    
+    messages_exceptions = []
+    messages_logger     = []
+    
+    # defaults
+    # ========
+    _default_pid_filepath_prefix = "/var/run"
+    
+    
+    def __init__(self, app, messages = None, logger = None):
         """
         The parameter ``app`` must be a callable with, as minimum, the following attributes:
         
@@ -80,24 +89,36 @@ class DaemonRunner(object):
         Optional attributes are:
         
         * *before_start()* method
+        * *before_run()* method
 
+        The parameter *messages* must behaved like a dictionary. The list of messages for
+        which the dictionary should have an entry is available through the class constant 
+        :const:`messages_logger` for the logging activities and the class constant 
+        :const:`messages_exception` for the exceptions.
         
-        The parameter ``logger`` is meant to receive a compatible callable to the
-        ``logging`` module. This parameter defaults to ...
+        The parameter *logger* is meant to receive a compatible callable to the
+        ``logging`` module. This parameter defaults to ``timed rotating`` file of the form ::
+        
+            /var/log/${app.name}.log
+
+        Note that this logger is only active when the daemon is started: prior to this,
+        only exceptions are raised for conferring error conditions.
+        
         """
         #attributes
         self.app = app
+        self.logger = logger
         self.context = DaemonContext()
         
         #validations
+        #  Don't init anything BEFORE going through
+        #  this checkpoint
         self.validateApp()
         
         #initialization
-        self.pidfile = PIDFileHelper.make_pidlockfile(app.pidfile_path)
-        self.context.pidfile = self.pidfile
-        
         self._configSTDs()
         self._configPIDFile()
+
 
 
     def cmd_start(self):
@@ -115,19 +136,38 @@ class DaemonRunner(object):
             if PIDFileHelper.pidfile_lock_is_stale(self.pidfile):
                 self.pidfile.break_lock()
             else:
-                error = SystemExit(
-                    "PID file %(pidfile_path)r already locked"
-                    % vars())
-                raise error
+                self._raise('pidfile_locked', {'path':self.pidfile.path})
+             
+        
+        # BEFORE START
+        # ============
+        abort = self._tryBeforeStart()
+        if abort:
+            self._raise('', {})   
 
+        # START!!!
+        # ========
         self.daemon_context.open()
+
+        # From this point on, use our configured logger
+        # ---------------------------------------------
+        self._configLogger()
+        
 
         pid = os.getpid()
         message = self.start_message % vars()
         sys.stderr.write("%(message)s\n" % vars())
         sys.stderr.flush()
 
+        # Before starting...
+        abort = self._tryBeforeRun()
+        if abort:
+            self._raise('', {})
+
+        # RUN!!!
+        # ======
         self.app.run()
+
         
     def cmd_stop(self):
         """
@@ -254,21 +294,43 @@ class DaemonRunner(object):
         """
         Configures the PID File
         """
+        prefix = self._secureGetFromApp('pidfile_pathprefix', 
+                                        self._default_pid_filepath_prefix)
+        
+        pidfile_path = prefix.rstrip('/') + "/" + self.app.name
+        
+        self.pidfile = PIDFileHelper.make_pidlockfile(pidfile_path)
+        self.context.pidfile = self.pidfile       
+
+
+    def _configLogger(self):
+        """
+        Configures the logger
+        
+        Verifies if a logger was specified at initialization time otherwise
+        build a default one. 
+        """
+        if self.logger is None:
+            self.logger = logger.getDefault( self.app.name )
+         
+            
+    def _secureGetFromApp(self, param, default = None):
+        """
+        Gets a parameter from the ``app``
+        """
+        return getattr(self.app, param, default)
+
 
 
 
 # ===============================================================================
 
 
-class DefaultLogger(object):
-    """
-    """
-    
-
 
 
 class ReferenceApp(object):
     """
+    ReferenceApp: used as model of an ``app``
     """
     
     _required_attributes = ['name', 'run']
