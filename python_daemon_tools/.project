@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>python_daemon_tools</name>
+	<name>python_daemon_tools_SVN</name>
 	<comment></comment>
 	<projects>
 		<project>python-daemon-tools</project>
@@ -9,16 +9,6 @@
 		<buildCommand>
 			<name>org.python.pydev.PyDevBuilder</name>
 			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
-			<triggers>full,incremental,</triggers>
-			<arguments>
-				<dictionary>
-					<key>LaunchConfigHandle</key>
-					<value>&lt;project&gt;/trunk/python_daemon_tools/.externalToolBuilders/SPHINX.launch</value>
-				</dictionary>
 			</arguments>
 		</buildCommand>
 	</buildSpec>

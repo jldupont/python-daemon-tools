@@ -1,8 +1,12 @@
-#!/usr/bin/env python
 r"""
-python_daemon_tools: adds functionality ``python_daemon`` package
+python_daemon_tools: adds functionality to ``python_daemon`` package
 
-more documentation...
+The package python_daemon_ is very useful but lacks certain features such as:
+
+1. The capability to ``start`` and ``stop`` a daemon
+2. Assist with logging
+
+This package adds these functionalities to ``python_daemon``.
 
 .. _python_daemon: http://pypi.python.org/pypi/python-daemon/
 

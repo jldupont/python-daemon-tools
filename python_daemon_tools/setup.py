@@ -43,9 +43,8 @@ setup(
     packages         = find_packages(),
     classifiers      = __classifiers,
     install_requires = __dependencies,
+    tests_require    = ['MiniMock >=1.0',],
+    test_suite       = ['tests.suite'],
     zip_safe         = True,
 )
 
-print short_description
-print "~~~~~~~~~~~~~"
-print long_description
