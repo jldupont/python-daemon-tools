@@ -214,6 +214,36 @@ class DaemonRunner(object):
         raise DaemonRunnerException(msg, params)
     
     
+    def _tryBeforeStart(self):
+        """
+        Gives a chance to the application to abort 
+        prior to the ``start`` phase
+        """
+        return self.__tryAppMethod('before_start', '')
+
+    def _tryBeforeRun(self):
+        """
+        Gives a chance to the application to abort 
+        prior to the ``run`` phase        
+        """
+        return self.__tryAppMethod('before_run', '')
+        
+    def __tryAppMethod(self, method, msg):
+        """
+        """
+        method = _secureGetFromApp(method, None)
+        
+        # Don't abort for nothing
+        if method is None:
+            return False
+        
+        if not callable(method):
+            self._raise(msg, {})
+            
+        abort = method()
+        return abort
+    
+    
     def _validateApp(self):
         """
         Performs some quick checks on the ``app`` attribute
