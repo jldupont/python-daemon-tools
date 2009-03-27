@@ -52,6 +52,12 @@ class DaemonRunner(object):
     """
     Controller class for a callable running in a separate background process
     
+    The principal methods are:
+    
+    * :meth:`cmd_start`
+    * :meth:`cmd_stop`
+    
+    
     The ``PID lock file`` is derived from ``app.name`` in the following way ::
     
         ${app.pid_directory}/${app.name}.pid
@@ -79,8 +85,21 @@ class DaemonRunner(object):
         The parameter ``logger`` is meant to receive a compatible callable to the
         ``logging`` module. This parameter defaults to ...
         """
-
+        #attributes
+        self.app = app
+        self.context = DaemonContext()
         
+        #validations
+        self.validateApp()
+        
+        #initialization
+        self.pidfile = PIDFileHelper.make_pidlockfile(app.pidfile_path)
+        self.context.pidfile = self.pidfile
+        
+        self._configSTDs()
+        self._configPIDFile()
+
+
     def cmd_start(self):
         """
         Starts the daemon for ``app``
@@ -90,11 +109,48 @@ class DaemonRunner(object):
         
         The method ``app.before_start()`` need not to exist (a validity check is performed).
         """
+        if self.pidfile.is_locked():
+            pidfile_path = self.pidfile.path
+            
+            if PIDFileHelper.pidfile_lock_is_stale(self.pidfile):
+                self.pidfile.break_lock()
+            else:
+                error = SystemExit(
+                    "PID file %(pidfile_path)r already locked"
+                    % vars())
+                raise error
+
+        self.daemon_context.open()
+
+        pid = os.getpid()
+        message = self.start_message % vars()
+        sys.stderr.write("%(message)s\n" % vars())
+        sys.stderr.flush()
+
+        self.app.run()
         
     def cmd_stop(self):
         """
         Stops the daemon for (the currently running) ``app`` but not before calling ``app.stop``
         """
+        if not self.pidfile.is_locked():
+            pidfile_path = self.pidfile.path
+            error = SystemExit(
+                "PID file %(pidfile_path)r not locked"
+                % vars())
+            raise error
+
+        if PIDFileHelper.pidfile_lock_is_stale(self.pidfile):
+            self.pidfile.break_lock()
+        else:
+            pid = self.pidfile.read_pid()
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError, exc:
+                error = SystemExit(
+                    "Failed to terminate %(pid)d: %(exc)s"
+                    % vars())
+                raise error
         
     def cmd_restart(self):
         """
@@ -105,4 +161,122 @@ class DaemonRunner(object):
 
 
 
+    # =========================================================
+    # PRIVATE
+    # =========================================================
+    
+    
+    
+    def _raise(self, msg, params):
+        """
+        Exception handling helper
+        """
+        raise DaemonRunnerException(msg, params)
+    
+    
+    def _validateApp(self):
+        """
+        Performs some quick checks on the ``app`` attribute
+        """
+        required_attributes = ['name', 'run']
+        
+        # of course `app` must be configured
+        if self.app is None:
+            self._raise('', {})
+        
+        # and must be callable
+        if not callable(self.app):
+            self._raise('', {})
 
+        def _checkAppAttr(app, attr):
+            if not hasattr(app, attr):
+                self._raise(msg, {})
+
+        # check required parameters
+        for attr in ReferenceApp.requiredAttributes():
+            checkAppAttr(attr)
+            
+    
+            
+
+    def _configSTDs(self):
+        """
+        Configure stdin, stdout, stderr
+        """
+        stds = {    'stdin':    ('r',  {}), 
+                    'stdout':   ('w+', {}),
+                    'stderr':   ('w+', {'buffering':0} ) }
+        
+        # e.g. stdin_path  in `app`
+        #  paths = { std: path }
+        paths = dict( (var,getattr(self.app, std+'_path', None))
+                    for std in stds )
+        
+        # skips the `None` ones
+        handles = self._openStds( paths, stds )
+
+        # configure the DaemonContext
+        for var, handle in handles:
+            setattr(self.context, var, handle)
+
+
+    def _openStds(self, paths, stds):
+        """
+        Opens the files according to the filepaths, returns handles
+        """
+        # filter out `None` paths
+        names = filter(lambda X: paths[X] is not None, paths)
+        
+        handles = {}
+        
+        for name in names:
+            path   = paths[name]
+            access = stds[name](0)
+            params = stds[name](1) 
+            handle = self._tryOpenStd(name, path, access, params)
+            handles[name] = handle
+        
+        # { name:handle }    
+        return handles
+        
+        
+    def _tryOpenStd(self, name, path, access, params):
+        """
+        Guarded Open File
+        """
+        try:    handle = open(path, access, **params)
+        except: self._raise('error_openfilepath', {'path':path, 'extra':name})
+            
+        return handle
+        
+
+    def _configPIDFile(self):
+        """
+        Configures the PID File
+        """
+
+
+
+# ===============================================================================
+
+
+class DefaultLogger(object):
+    """
+    """
+    
+
+
+
+class ReferenceApp(object):
+    """
+    """
+    
+    _required_attributes = ['name', 'run']
+    
+    def requiredAttributes(self):
+        """
+        Generates the list of required attributes
+        """
+        for attr in self.required_attributes:
+            yield attr
+            
