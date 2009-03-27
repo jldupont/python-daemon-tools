@@ -22,3 +22,4 @@ Modules
 	
 	modules/runner
 	modules/helper
+	modules/logger

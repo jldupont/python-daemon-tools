@@ -57,6 +57,11 @@
 <dt id="python_daemon_tools.runner.DaemonRunner">
 <!--[python_daemon_tools.runner.DaemonRunner]-->class <tt class="descclassname">python_daemon_tools.runner.</tt><tt class="descname">DaemonRunner</tt><big>(</big><em>app</em>, <em>logger=None</em><big>)</big><a class="headerlink" href="#python_daemon_tools.runner.DaemonRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Controller class for a callable running in a separate background process</p>
+<p>The principal methods are:</p>
+<ul class="simple">
+<li><a title="python_daemon_tools.runner.DaemonRunner.cmd_start" class="reference internal" href="#python_daemon_tools.runner.DaemonRunner.cmd_start"><tt class="xref docutils literal"><span class="pre">cmd_start()</span></tt></a></li>
+<li><a title="python_daemon_tools.runner.DaemonRunner.cmd_stop" class="reference internal" href="#python_daemon_tools.runner.DaemonRunner.cmd_stop"><tt class="xref docutils literal"><span class="pre">cmd_stop()</span></tt></a></li>
+</ul>
 <p>The <tt class="docutils literal"><span class="pre">PID</span> <span class="pre">lock</span> <span class="pre">file</span></tt> is derived from <tt class="docutils literal"><span class="pre">app.name</span></tt> in the following way</p>
 <pre>${app.pid_directory}/${app.name}.pid</pre>
 <p>and by default is located in the <tt class="docutils literal"><span class="pre">/var/run</span></tt> directory; this directory
@@ -128,7 +133,7 @@ the method can abort the process by raising ...</p>
             <h4>Previous topic</h4>
             <p class="topless"><a href="../index.html" title="previous chapter">Welcome to Python-Daemon-Tools documentation!</a></p>
             <h4>Next topic</h4>
-            <p class="topless"><a href="helper.html" title="next chapter"><tt class="docutils literal"><span class="pre">python_daemon_tools.helper</span></tt></a></p>
+            <p class="topless"><a href="helper.html" title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">python_daemon_tools.helper</span></tt></a></p>
             <h3>This Page</h3>
             <ul class="this-page-menu">
               <li><a href="../_sources/modules/runner.txt">Show Source</a></li>
