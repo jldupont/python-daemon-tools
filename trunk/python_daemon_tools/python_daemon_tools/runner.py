@@ -19,7 +19,7 @@ import sys
 # Imports from package ``python_daemon`` available on Pypi
 # --------------------------------------------------------
 try:
-    from python_daemon.daemon import DaemonContext
+    from python_daemon.daemon      import DaemonContext
     from python_daemon.pidlockfile import PIDLockFile
 except:
     # For the Windows based development environment...
@@ -40,9 +40,13 @@ class DaemonRunnerException(Exception):
     DaemonRunner Exception base class
     
     Allows for easier customization of error messages.
+    Use `duck typing` to inspect the Exception for the 
+    :attr:`msg_id` attribute.
+    
     """
-    def __init__(self, message, params=None):
+    def __init__(self, message, msg_id=None, params=None):
         Exception.__init__(self, message)
+        self.msg_id = msg_id
         self.params = params
 
 
@@ -108,12 +112,15 @@ class DaemonRunner(object):
         #attributes
         self.app = app
         self.logger = logger
+        self.messages = messages
+        
         self.context = DaemonContext()
         
         #validations
         #  Don't init anything BEFORE going through
         #  this checkpoint
         self.validateApp()
+        
         
         #initialization
         self._configSTDs()
@@ -136,7 +143,8 @@ class DaemonRunner(object):
             if PIDFileHelper.pidfile_lock_is_stale(self.pidfile):
                 self.pidfile.break_lock()
             else:
-                self._raise('pidfile_locked', {'path':self.pidfile.path})
+                ##EXCEPTION##
+                self._raise('error_pidfile_locked', {'path':self.pidfile.path})
              
         
         # BEFORE START
@@ -147,7 +155,11 @@ class DaemonRunner(object):
 
         # START!!!
         # ========
-        self.daemon_context.open()
+        try:
+            self.daemon_context.open()
+        except Exception,e:
+            ##EXCEPTION##
+            self._raise('error_daemon_open', {'exc':e})
 
         # From this point on, use our configured logger
         # ---------------------------------------------
@@ -155,14 +167,13 @@ class DaemonRunner(object):
         
 
         pid = os.getpid()
-        message = self.start_message % vars()
-        sys.stderr.write("%(message)s\n" % vars())
-        sys.stderr.flush()
-
+        self.logger.info('logger_daemon_start')
+        
         # Before starting...
         abort = self._tryBeforeRun()
         if abort:
-            self._raise('', {})
+            ##EXCEPTION##
+            self._raise('error_daemon_aborted', {})
 
         # RUN!!!
         # ======
@@ -175,10 +186,10 @@ class DaemonRunner(object):
         """
         if not self.pidfile.is_locked():
             pidfile_path = self.pidfile.path
-            error = SystemExit(
-                "PID file %(pidfile_path)r not locked"
-                % vars())
-            raise error
+            
+            ##EXCEPTION##
+            self._raise('error_pidfile_not_locked', {'path':pidfile_path})
+
 
         if PIDFileHelper.pidfile_lock_is_stale(self.pidfile):
             self.pidfile.break_lock()
@@ -187,10 +198,8 @@ class DaemonRunner(object):
             try:
                 os.kill(pid, signal.SIGTERM)
             except OSError, exc:
-                error = SystemExit(
-                    "Failed to terminate %(pid)d: %(exc)s"
-                    % vars())
-                raise error
+                ##EXCEPTION##
+                self._raise('error_terminate_process', {'pid':pid})                
         
     def cmd_restart(self):
         """
@@ -207,7 +216,7 @@ class DaemonRunner(object):
     
     
     
-    def _raise(self, msg, params):
+    def _raise(self, msg, params=None):
         """
         Exception handling helper
         """
