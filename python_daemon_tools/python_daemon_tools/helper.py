@@ -10,7 +10,7 @@ This module borrows heavily from python_daemon_ available at Pypi
 """
 __author__  = "Jean-Lou Dupont"
 __email     = "python (at) jldupont.com"
-__fileid__  = "$Id$"
+__fileid    = "$Id$"
 
 __all__ = ['PIDFileHelper', 'PIDFileHelperException', ]
 
@@ -30,8 +30,9 @@ class PIDFileHelperException(Exception):
     
     Allows for easier translation of error messages
     """
-    def __init__(self, message, params = None):
+    def __init__(self, message, msg_id = None, params = None):
         Exception.__init__(self, message)
+        self.msg_id = msg_id
         self.params = params
         
         
@@ -40,7 +41,6 @@ class PIDFileHelperException(Exception):
 class PIDFileHelper(object):
     """ 
     PID file related helper functions
-    
     """
     
     @classmethod
@@ -52,10 +52,14 @@ class PIDFileHelper(object):
     
         if path is not None:
             if not isinstance(path, basestring):
-                raise PIDFileHelperException("invalid_filesystem_path", {'path':path})
+                raise PIDFileHelperException("Invalid filesystem path [%s]" % path, 
+                                             msg_id="error_invalid_filesystem_path", 
+                                             params={'path':path})
 
             if not os.path.isabs(path):
-                raise PIDFileHelperException("invalid_absolute_path", {'path':path})
+                raise PIDFileHelperException("Invalid absolute filesystem path [%s]" % path,
+                                             msg_id= "error_invalid_absolute_path", 
+                                             params= {'path':path})
 
             lockfile = pidlockfile.PIDLockFile(path)
     
@@ -76,4 +80,3 @@ class PIDFileHelper(object):
     
         return result
     
-
